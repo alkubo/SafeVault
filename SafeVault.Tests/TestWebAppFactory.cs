@@ -12,11 +12,13 @@ public class TestWebAppFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseEnvironment("Development");
         builder.ConfigureAppConfiguration((context, config) =>
         {
             var dict = new Dictionary<string, string?>
             {
-                ["ConnectionStrings:Main"] = $"Data Source={_dbPath}"
+                ["ConnectionStrings:Main"] = $"Data Source={_dbPath}",
+                ["SeedAdmin"] = "true"
             };
             config.AddInMemoryCollection(dict!);
         });

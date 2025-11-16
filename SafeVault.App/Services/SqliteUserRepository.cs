@@ -3,15 +3,19 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using SafeVault.Core.Models;
 using SafeVault.Core.Services;
+using SafeVault.Core.Security;
 
 namespace SafeVault.App.Services;
 
 public class SqliteUserRepository : IUserRepository
 {
     private readonly string _connectionString;
+    private readonly bool _seedAdmin;
     public SqliteUserRepository(IConfiguration config)
     {
         _connectionString = config.GetConnectionString("Main") ?? "Data Source=safevault.db";
+        _seedAdmin = string.Equals(config["SeedAdmin"], "true", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase);
         EnsureSchema();
     }
 
@@ -20,16 +24,17 @@ public class SqliteUserRepository : IUserRepository
         using var conn = new SqliteConnection(_connectionString);
         conn.Execute("CREATE TABLE IF NOT EXISTS Users (UserID INTEGER PRIMARY KEY AUTOINCREMENT, Username TEXT NOT NULL, Email TEXT NOT NULL);");
         conn.Execute("CREATE UNIQUE INDEX IF NOT EXISTS IX_Users_Username ON Users(Username);");
-        // columns for auth
-        try { conn.Execute("ALTER TABLE Users ADD COLUMN PasswordHash TEXT"); } catch { /* ignore if exists */ }
-        try { conn.Execute("ALTER TABLE Users ADD COLUMN Role TEXT"); } catch { /* ignore if exists */ }
-
-        // seed admin if not exists
-        var existingAdmin = conn.ExecuteScalar<long>("SELECT COUNT(1) FROM Users WHERE Username = 'admin'");
-        if (existingAdmin == 0)
+        try { conn.Execute("ALTER TABLE Users ADD COLUMN PasswordHash TEXT"); } catch { }
+        try { conn.Execute("ALTER TABLE Users ADD COLUMN Role TEXT"); } catch { }
+        if (_seedAdmin)
         {
-            var hash = BCrypt.Net.BCrypt.HashPassword("ChangeMe!123");
-            conn.Execute("INSERT INTO Users (Username, Email, PasswordHash, Role) VALUES (@u, @e, @p, @r)", new { u = "admin", e = "admin@local", p = hash, r = "admin" });
+            var existingAdmin = conn.ExecuteScalar<long>("SELECT COUNT(1) FROM Users WHERE Username = 'admin'");
+            if (existingAdmin == 0)
+            {
+                var adminPass = Environment.GetEnvironmentVariable("SAFEVAULT_ADMIN_PASSWORD") ?? "ChangeMe!123";
+                var hash = BCrypt.Net.BCrypt.HashPassword(adminPass);
+                conn.Execute("INSERT INTO Users (Username, Email, PasswordHash, Role) VALUES (@u, @e, @p, @r)", new { u = "admin", e = "admin@local", p = hash, r = "admin" });
+            }
         }
     }
 
@@ -52,9 +57,8 @@ public class SqliteUserRepository : IUserRepository
 
     public async Task<IReadOnlyList<UserInput>> SearchByEmailFragmentAsync(string fragment, CancellationToken ct = default)
     {
-        // Fragment sanitized: allow typical email chars only, then use parameter with wildcards
-        var cleaned = new string(fragment.Where(c => char.IsLetterOrDigit(c) || "@._-".Contains(c)).ToArray());
-        const string sql = "SELECT Username, Email FROM Users WHERE Email LIKE @Pattern";
+        var cleaned = InputSanitizer.SanitizeForLike(fragment);
+        const string sql = "SELECT Username, Email FROM Users WHERE Email LIKE @Pattern ESCAPE '\\'";
         using var conn = Open();
         var rows = await conn.QueryAsync<UserInput>(new CommandDefinition(sql, new { Pattern = "%" + cleaned + "%" }, cancellationToken: ct));
         return rows.ToList();

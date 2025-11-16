@@ -1,0 +1,29 @@
+@page
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@model SafeVault.App.Pages.Dashboard.UserModel
+@{
+    ViewData["Title"] = "User Dashboard";
+}
+
+<h2>User Dashboard</h2>
+<p><strong>Username:</strong> @Model.CurrentUser?.Username</p>
+<p><strong>Email:</strong> @Model.CurrentUser?.Email</p>
+<p><strong>Role:</strong> @Model.CurrentUser?.Role</p>
+
+<h3>Change Password</h3>
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label" for="NewPassword">New Password</label>
+        <input type="password" class="form-control" id="NewPassword" name="NewPassword" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="ConfirmNewPassword">Confirm New Password</label>
+        <input type="password" class="form-control" id="ConfirmNewPassword" name="ConfirmNewPassword" />
+    </div>
+    <button type="submit" class="btn btn-primary">Update Password</button>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.Status))
+{
+    <div class="alert alert-info mt-2">@Model.Status</div>
+}

@@ -1,0 +1,41 @@
+@page
+@model SafeVault.App.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h2>Register</h2>
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="Form.Username" class="form-label"></label>
+        <input asp-for="Form.Username" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Username"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Form.Email" class="form-label"></label>
+        <input asp-for="Form.Email" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Email"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label">Password</label>
+        <input asp-for="Password" type="password" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+        <input asp-for="ConfirmPassword" type="password" class="form-control" />
+        @if (!string.IsNullOrEmpty(Model.PasswordError))
+        {
+            <span class="text-danger">@Model.PasswordError</span>
+        }
+    </div>
+    <button type="submit" class="btn btn-primary">Register</button>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.ResultMessage))
+{
+    <div class="alert alert-info">@Model.ResultMessage</div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

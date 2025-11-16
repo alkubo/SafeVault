@@ -1,9 +1,6 @@
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text.Encodings.Web;
 using SafeVault.Core.Models;
-using Xunit;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Encodings.Web;
 
 namespace SafeVault.Tests;
 

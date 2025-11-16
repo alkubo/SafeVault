@@ -1,0 +1,27 @@
+@page
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles="admin")]
+@model SafeVault.App.Pages.Admin.DashboardModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<h2>Admin Dashboard</h2>
+<table class="table table-sm table-striped">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var u in Model.Users)
+    {
+        <tr>
+            <td>@u.Username</td>
+            <td>@u.Email</td>
+            <td>@u.Role</td>
+        </tr>
+    }
+    </tbody>
+</table>

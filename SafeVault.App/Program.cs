@@ -1,12 +1,30 @@
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    // Exemplo: proteger Users/Index por padrão (poderemos ajustar conforme necessário)
+    // options.Conventions.AuthorizeFolder("/Users");
+});
 
 // Connection string (para SQLite local)
 builder.Configuration["ConnectionStrings:Main"] = "Data Source=safevault.db";
 
 builder.Services.AddScoped<SafeVault.Core.Services.IUserRepository, SafeVault.App.Services.SqliteUserRepository>();
+
+builder.Services.AddAuthentication("Cookies").AddCookie("Cookies", options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdmin", policy => policy.RequireRole("admin"));
+});
 
 var app = builder.Build();
 
@@ -29,6 +47,7 @@ app.Use(async (ctx, next) =>
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
@@ -36,3 +55,5 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.Run();
+
+public partial class Program { }

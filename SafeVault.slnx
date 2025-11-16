@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="SafeVault.App/SafeVault.App.csproj" />
+  <Project Path="SafeVault.Core/SafeVault.Core.csproj" />
+  <Project Path="SafeVault.Tests/SafeVault.Tests.csproj" Id="16a7cfdb-9e07-4cde-9824-7540fe9adff1" />
+</Solution>
